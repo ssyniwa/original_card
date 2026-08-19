@@ -121,7 +121,7 @@ else:
 
   for i, card in enumerate(st.session_state.player_hand):
     with cols[i]:
-      image_path = f"images/{card.suit}_{card.value}.png"
+      image_path = f"images/{card.suit}_{card.value}.jpg"
       st.image(image_path, width=100)
       st.markdown(
           f"**{ATTRIBUTES[card.suit]['icon']} {card.suit}**<br>数値: **{card.value}**",
