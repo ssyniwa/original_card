@@ -3,10 +3,10 @@ import streamlit as st
 
 # 属性と表示設定
 ATTRIBUTES = {
-    "火": {"color": "red", "icon": "🔥"},
-    "水": {"color": "blue", "icon": "💧"},
-    "雷": {"color": "orange", "icon": "⚡"},
-    "風": {"color": "green", "icon": "🌪️"},
+    "fire": {"color": "red", "icon": "🔥"},
+    "water": {"color": "blue", "icon": "💧"},
+    "thunder": {"color": "orange", "icon": "⚡"},
+    "wind": {"color": "green", "icon": "🌪️"},
 }
 
 
