@@ -171,6 +171,14 @@ def get_ai_best_move(hand):
                     best_is_combo = False
 
     return best_move, max_damage
+
+def replenish_hand(hand, target_count=5):
+    """手札が指定枚数未満のとき、デッキから補充する。デッキが切れれば再生成する"""
+    while len(hand) < target_count:
+        if not st.session_state.deck:
+            # デッキが枯渇した場合、新しいデッキを作成してシャッフル
+            st.session_state.deck = create_deck()
+        hand.append(st.session_state.deck.pop())
 # 画面レイアウト
 st.title("🃏 属性トランプ・AIカードバトル")
 
@@ -245,14 +253,13 @@ else:
           phand_name, damage = evaluate_hand(chosen_cards)
           st.session_state.ai_hp = max(0, st.session_state.ai_hp - int(damage))
           st.session_state.log.insert(0, f"プレイヤーの『{phand_name}』！『{int(damage)}』のダメージを与えた！")
-          # 手札の更新（使った分を補充して常に5枚にする）
+          # 手札の更新
           selected_indices.sort(reverse=True)
           for idx in selected_indices:
               st.session_state.player_hand.pop(idx)
           
-          # 手札が5枚未満の間、デッキから補充する
-          while len(st.session_state.player_hand) < 5 and st.session_state.deck:
-              st.session_state.player_hand.append(st.session_state.deck.pop())
+          # 補充（自動リシャッフル付き）
+          replenish_hand(st.session_state.player_hand, 5)
   
           # AIのターン：手札の中でコンボを狙う
           if st.session_state.ai_hp > 0 and st.session_state.ai_hand:
@@ -269,13 +276,13 @@ else:
                 hand_name, _ = evaluate_hand(ai_choice)
                 st.session_state.log.insert(0, f"AIの『{hand_name}』！ **{int(ai_damage)}** のダメージを受けた！")
                 
-                # AIの手札から「コンボに使用したカードのみ」を除去
+                # AIの手札から使用したカードを除去
                 for card in ai_choice:
                     if card in st.session_state.ai_hand:
                         st.session_state.ai_hand.remove(card)
-                # 手札が5枚未満の間、デッキから補充する
-                while len(st.session_state.ai_hand) < 5 and st.session_state.deck:
-                    st.session_state.ai_hand.append(st.session_state.deck.pop())
+                
+                # 補充（自動リシャッフル付き）
+                replenish_hand(st.session_state.ai_hand, 5)
                 
   
           st.rerun()
