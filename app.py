@@ -88,17 +88,7 @@ def evaluate_hand(cards):
 # 画面レイアウト
 st.title("🃏 属性トランプ・AIカードバトル")
 
-# HP表示
-col1, col2 = st.columns(2)
-with col1:
-  st.metric(
-      label="プレイヤー HP",
-      value=f"{st.session_state.player_hp}/100",
-  )
-with col2:
-  st.metric(label="AI 相手 HP", value=f"{st.session_state.ai_hp}/100")
 
-st.markdown("---")
 
 # ゲーム終了判定
 if st.session_state.player_hp <= 0:
@@ -114,76 +104,75 @@ elif st.session_state.ai_hp <= 0:
       del st.session_state[key]
     st.rerun()
 else:
-  # プレイヤーの手札選択
-  st.subheader("あなたの手札（攻撃に使うカードを選択してください）")
-
+  # 1. 対面バトルエリア（AIの場）
+  st.subheader("🤖 AIの場")
+  if st.session_state.ai_last_card:
+      c = st.session_state.ai_last_card
+      col_ai1, col_ai2 = st.columns([1, 4])
+      with col_ai1:
+          st.image(f"images/{c.suit}_{c.value}.jpg", width=120)
+      with col_ai2:
+          st.write(f"### AIは {ATTRIBUTES[c.suit]['icon']} {c.suit} の {c.value} を出した！")
+  else:
+      st.write("AIはまだカードを出していません。")
+  
+  st.markdown("---")
+  
+  # 2. HP表示
+  col_h1, col_h2 = st.columns(2)
+  with col_h1:
+      st.metric("プレイヤー HP", f"{st.session_state.player_hp}/100")
+  with col_h2:
+      st.metric("AI 相手 HP", f"{st.session_state.ai_hp}/100")
+  
+  st.markdown("---")
+  
+  # 3. プレイヤーの手札選択（プレイヤーの場）
+  st.subheader("👤 あなたの手札")
   selected_indices = []
   cols = st.columns(len(st.session_state.player_hand))
-
+  
   for i, card in enumerate(st.session_state.player_hand):
-    with cols[i]:
-      image_path = f"images/{card.suit}_{card.value}.jpg"
-      st.image(image_path, width=150)
-      st.markdown(
-          f"**{ATTRIBUTES[card.suit]['icon']} {card.suit}**<br>数値: **{card.value}**",
-          unsafe_allow_html=True,
-      )
-      if st.checkbox("選択", key=f"card_{i}"):
-        selected_indices.append(i)
-
+      with cols[i]:
+          st.image(f"images/{card.suit}_{card.value}.jpg", width=120)
+          st.checkbox("選択", key=f"card_{i}")
+          if st.session_state.get(f"card_{i}"):
+              selected_indices.append(i)
+  
+  # --- 攻撃ボタン処理 ---
   if st.button("選択したカードで攻撃！"):
-    if not selected_indices:
-      st.warning("1枚以上のカードを選択してください。")
-    else:
-      # プレイヤーの攻撃処理
-      chosen_cards = [st.session_state.player_hand[i] for i in selected_indices]
-      hand_name, damage = evaluate_hand(chosen_cards)
-
-      damage = int(damage)
-      st.session_state.ai_hp = max(0, st.session_state.ai_hp - damage)
-      st.session_state.log.insert(
-          0,
-          f"プレイヤーの攻撃！『{hand_name}』を発動！ AIに **{damage}** のダメージ！",
-      )
-
-      # 手札の補充
-      selected_indices.sort(reverse=True)
-      for idx in selected_indices:
-        st.session_state.player_hand.pop(idx)
-        if st.session_state.deck:
-          st.session_state.player_hand.append(st.session_state.deck.pop())
-
-      # AIのターン（簡易的ランダム反撃）
-      if st.session_state.ai_hp > 0 and st.session_state.ai_hand:
-        ai_choice = random.choice(st.session_state.ai_hand)
-        st.session_state.ai_last_card = ai_choice # ★ここに追加：出したカードを記録
-        
-        ai_damage = ai_choice.value * 2
-        st.session_state.player_hp = max(0, st.session_state.player_hp - ai_damage)
-        st.session_state.log.insert(0, f"AIの反撃！{ATTRIBUTES[ai_choice.suit]['icon']} {ai_choice.suit}の{ai_choice.value}で攻撃！")
-        
-        # AIの手札入れ替え
-        st.session_state.ai_hand.remove(ai_choice)
-        if st.session_state.deck:
-          st.session_state.ai_hand.append(st.session_state.deck.pop())
-
-      st.rerun()
-
-  # ★ここに追加：AIの直前カードを表示するエリア
-  st.subheader("AIの直前の行動")
-  if st.session_state.ai_last_card:
-    c = st.session_state.ai_last_card
-    col_a, col_b = st.columns([1, 3])
-    with col_a:
-        st.image(f"images/{c.suit}_{c.value}.jpg", width=150)# AIアイコンなど
-    with col_b:
-        st.info(f"AIがカードを出しました: {c.suit} {c.value}")
-    # 画像を表示する場合の例：
-    # st.image(f"images/{c.suit}_{c.value}.png", width=80)
-  else:
-    st.write("まだ攻撃を受けていません。")
-
-  # バトルログ
-  st.markdown("### 📜 バトルログ")
-  for log in st.session_state.log[:5]:
-    st.text(log)
+      if not selected_indices:
+          st.warning("カードを選択してください。")
+      else:
+          # プレイヤーの攻撃処理
+          chosen_cards = [st.session_state.player_hand[i] for i in selected_indices]
+          hand_name, damage = evaluate_hand(chosen_cards)
+          st.session_state.ai_hp = max(0, st.session_state.ai_hp - int(damage))
+          
+          # 手札の更新
+          selected_indices.sort(reverse=True)
+          for idx in selected_indices:
+              st.session_state.player_hand.pop(idx)
+              if st.session_state.deck:
+                  st.session_state.player_hand.append(st.session_state.deck.pop())
+  
+          # AIのターン：手札の中で最も数値が高いカードを選択
+          if st.session_state.ai_hp > 0:
+              # 戦略：手札の中で最強のカードを選ぶ
+              ai_choice = max(st.session_state.ai_hand, key=lambda x: x.value)
+              st.session_state.ai_last_card = ai_choice
+              
+              ai_damage = ai_choice.value * 2
+              st.session_state.player_hp = max(0, st.session_state.player_hp - ai_damage)
+              
+              # AIの手札入れ替え
+              st.session_state.ai_hand.remove(ai_choice)
+              if st.session_state.deck:
+                  st.session_state.ai_hand.append(st.session_state.deck.pop())
+  
+          st.rerun()
+  
+  # 4. バトルログ
+  st.subheader("📜 バトルログ")
+  for log in st.session_state.log[:3]:
+      st.text(log)
