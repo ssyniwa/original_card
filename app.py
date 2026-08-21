@@ -179,7 +179,7 @@ else:
             ai_choice, ai_damage = get_ai_best_move(st.session_state.ai_hand)
             
             # AIが選んだカードをログ用に記録
-            st.session_state.ai_last_card_list = ai_choice 
+            st.session_state.ai_last_card = ai_choice 
             
             st.session_state.player_hp = max(0, st.session_state.player_hp - int(ai_damage))
             st.session_state.log.insert(0, f"AIのコンボ！{int(ai_damage)}のダメージを受けた！")
