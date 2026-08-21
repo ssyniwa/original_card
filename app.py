@@ -51,43 +51,66 @@ if "initialized" not in st.session_state:
 
 # 役判定関数
 def evaluate_hand(cards):
-    if not cards:
-        return "選択なし", 0
+  """カードのリストから役を判定し、
 
-    suits = [c.suit for c in cards]
-    values = sorted([c.value for c in cards])
+  役を構成する最適（最小限）のカードセットとダメージを返す
+  """
+  if not cards:
+    return "選択なし", 0
 
-    is_same_suit = len(set(suits)) == 1
-    # 数字のカウント
-    val_counts = {v: values.count(v) for v in set(values)}
-    max_count = max(val_counts.values())
-    
-    # 連番チェック
-    is_sequential = all(values[i] + 1 == values[i+1] for i in range(len(values)-1))
-    
-    base_power = sum(values)
+  # 枚数に応じた最適な部分集合を評価するため、まずはそのままのカードでチェック
+  suits = [c.suit for c in cards]
+  values = sorted([c.value for c in cards])
 
-    # 1. ストレートフラッシュ (3枚以上で連番かつ同属性)
-    if len(cards) >= 3 and is_same_suit and is_sequential:
-        return "🌟 ストレートフラッシュ", base_power * 4.0
-    
-    # 2. フォーカード
-    if max_count == 4:
-        return "🍀 フォーカード", base_power * 3.5
-        
-    # 3. スリーカード
-    if max_count == 3:
-        return "🔥 スリーカード", base_power * 2.5
-        
-    # 4. フラッシュ (同属性)
-    if len(cards) >= 2 and is_same_suit:
-        return "🌊 フラッシュ", base_power * 2.0
-        
-    # 5. ペア
-    if max_count == 2:
-        return "✨ ペア", base_power * 1.5
+  is_same_suit = len(set(suits)) == 1
+  val_counts = {v: values.count(v) for v in set(values)}
+  max_count = max(val_counts.values())
 
-    return "通常攻撃", base_power
+  is_sequential = (
+      all(values[i] + 1 == values[i + 1] for i in range(len(values) - 1))
+      if len(values) > 1
+      else True
+  )
+
+  # 1. ストレートフラッシュ (3枚以上で連番かつ同属性)
+  if len(cards) >= 3 and is_same_suit and is_sequential:
+    return "🌟 ストレートフラッシュ", sum(values) * 4.0
+
+  # 2. フォーカード (同じ数字が4枚以上)
+  if max_count >= 4:
+    target_val = [v for v, cnt in val_counts.items() if cnt >= 4][0]
+    # フォーカードを構成する4枚だけを抽出して計算
+    sub_cards = [c for c in cards if c.value == target_val][:4]
+    sub_values = [c.value for c in sub_cards]
+    return "🍀 フォーカード", sum(sub_values) * 3.5
+
+  # 3. スリーカード (同じ数字が3枚以上)
+  if max_count >= 3:
+    target_val = [v for v, cnt in val_counts.items() if cnt >= 3][0]
+    # スリーカードを構成する3枚だけを抽出して計算
+    sub_cards = [c for c in cards if c.value == target_val][:3]
+    sub_values = [c.value for c in sub_cards]
+    return "🔥 スリーカード", sum(sub_values) * 2.5
+
+  # 4. フラッシュ (同属性が2枚以上の場合、最も高い2枚以上を活かす等)
+  if len(cards) >= 2 and is_same_suit:
+    return "🌊 フラッシュ", sum(values) * 2.0
+
+  # 5. ペア (同じ数字が2枚以上)
+  if max_count >= 2:
+    target_val = [v for v, cnt in val_counts.items() if cnt >= 2][0]
+    # ペアを構成する正確に2枚だけを抽出して計算
+    sub_cards = [c for c in cards if c.value == target_val][:2]
+    sub_values = [c.value for c in sub_cards]
+    return "✨ ペア", sum(sub_values) * 1.5
+
+  # 6. 通常攻撃（もし複数枚選ばれていても役がない場合、一番強い1枚にするか、あるいはそのまま）
+  if len(cards) == 1:
+    return "通常攻撃", sum(values)
+
+  # 役がつかない複数枚の場合、一番数字が大きい1枚を通常攻撃として扱う
+  max_card = max(cards, key=lambda c: c.value)
+  return "通常攻撃", max_card.value
 def get_ai_best_move(hand):
     """手札から役が成立する最適なコンボのみを、余計なカードを含めずに選ぶAI"""
     if not hand:
