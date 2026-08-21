@@ -35,8 +35,8 @@ def create_deck():
 
 # 初期化
 if "initialized" not in st.session_state:
-  st.session_state.player_hp = 100
-  st.session_state.ai_hp = 100
+  st.session_state.player_hp = 1000
+  st.session_state.ai_hp = 1000
   st.session_state.deck = create_deck()
   st.session_state.player_hand = [
       st.session_state.deck.pop() for _ in range(5)
@@ -135,7 +135,7 @@ else:
       ai_cols = st.columns(len(ai_cards))
       for i, card in enumerate(ai_cards):
           with ai_cols[i]:
-              st.image(f"images/{card.suit}_{card.value}.jpg", width=100)
+              st.image(f"images/{card.suit}_{card.value}.jpg", width=120)
               st.caption(f"{ATTRIBUTES[card.suit]['icon']} {card.value}")
   else:
       st.write("AIはまだカードを出していません。")
@@ -145,9 +145,9 @@ else:
   # 2. HP表示
   col_h1, col_h2 = st.columns(2)
   with col_h1:
-      st.metric("プレイヤー HP", f"{st.session_state.player_hp}/100")
+      st.metric("プレイヤー HP", f"{st.session_state.player_hp}/1000")
   with col_h2:
-      st.metric("AI 相手 HP", f"{st.session_state.ai_hp}/100")
+      st.metric("AI 相手 HP", f"{st.session_state.ai_hp}/1000")
   
   st.markdown("---")
   
