@@ -123,7 +123,7 @@ else:
   for i, card in enumerate(st.session_state.player_hand):
     with cols[i]:
       image_path = f"images/{card.suit}_{card.value}.jpg"
-      st.image(image_path, width=100)
+      st.image(image_path, width=150)
       st.markdown(
           f"**{ATTRIBUTES[card.suit]['icon']} {card.suit}**<br>数値: **{card.value}**",
           unsafe_allow_html=True,
@@ -175,7 +175,7 @@ else:
     c = st.session_state.ai_last_card
     col_a, col_b = st.columns([1, 3])
     with col_a:
-        st.image(f"images/{c.suit}_{c.value}.jpg", width=80)# AIアイコンなど
+        st.image(f"images/{c.suit}_{c.value}.jpg", width=150)# AIアイコンなど
     with col_b:
         st.info(f"AIがカードを出しました: {c.suit} {c.value}")
     # 画像を表示する場合の例：
