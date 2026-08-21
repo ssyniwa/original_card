@@ -89,44 +89,37 @@ def evaluate_hand(cards):
 
     return "通常攻撃", base_power
 def get_ai_best_move(hand):
-    """手札から最強かつ正確なコンボを探すAI（ペアや同数カードの誤選択を防止）"""
+    """手札から役が成立する最適なコンボのみを厳選して選ぶAI"""
     if not hand:
-        return [], 0
-        
+        return [hand[0]], 0
+
     best_move = [hand[0]]
     _, max_damage = evaluate_hand(best_move)
-    
-    # 1. まず同じ数字のカード（ペアやスリーカードなど）をグループ化して、確実にペアだけで組めるか確認
-    value_groups = {}
-    for card in hand:
-        if card.value not in value_groups:
-            value_groups[card.value] = []
-            value_groups[card.value].append(card)
-            
-    # 同数カードのペア・スリーカード・フォーカードを優先的にチェック
-    for val, group in value_groups.items():
-        if len(group) >= 2:
-            # 2枚以上あるなら、最大4枚までの組み合わせ（ペア、スリー、フォー）を評価
-            for r in range(2, min(len(group), 4) + 1):
-                for combo in itertools.combinations(group, r):
-                    combo_list = list(combo)
-                    _, damage = evaluate_hand(combo_list)
-                    if damage > max_damage:
-                        max_damage = damage
-                        best_move = combo_list
+    best_is_combo = False  # 役（コンボ）が成立しているかどうか
 
-    # 2. 次に、属性が同じフラッシュ系や、その他の全ての組み合わせをチェック
+    # 全ての組み合わせ（1枚〜手札の枚数）をチェック
     for r in range(1, len(hand) + 1):
         for combo in itertools.combinations(hand, r):
             combo_list = list(combo)
             hand_name, damage = evaluate_hand(combo_list)
             
-            # 役に該当する場合のみ、最高ダメージのものを候補にする
-            if hand_name != "Normal" and hand_name != "通常攻撃":
-                if damage > max_damage:
+            # 役の名前が「通常攻撃」や「選択なし」以外ならコンボとみなす
+            is_combo = (hand_name != "通常攻撃" and hand_name != "選択なし")
+
+            if is_combo:
+                # 優先度1: コンボである場合。今までがコンボじゃなかった、あるいはコンボでよりダメージが高い場合
+                if not best_is_combo or damage > max_damage:
                     max_damage = damage
                     best_move = combo_list
-                    
+                    best_is_combo = True
+            else:
+                # 優先度2: コンボではない（1枚の通常攻撃など）場合。
+                # 現在のベストがコンボ「ではない」かつ、ダメージがより高い場合のみ更新
+                if not best_is_combo and damage > max_damage:
+                    max_damage = damage
+                    best_move = combo_list
+                    best_is_combo = False
+
     return best_move, max_damage
 # 画面レイアウト
 st.title("🃏 属性トランプ・AIカードバトル")
