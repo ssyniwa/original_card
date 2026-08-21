@@ -175,7 +175,7 @@ else:
     c = st.session_state.ai_last_card
     col_a, col_b = st.columns([1, 3])
     with col_a:
-        st.image(f"images/{c.suit}_{c.value}.png", width=80)# AIアイコンなど
+        st.image(f"images/{c.suit}_{c.value}.jpg", width=80)# AIアイコンなど
     with col_b:
         st.info(f"AIがカードを出しました: {c.suit} {c.value}")
     # 画像を表示する場合の例：
