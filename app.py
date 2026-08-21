@@ -89,23 +89,36 @@ def evaluate_hand(cards):
 
     return "通常攻撃", base_power
 def get_ai_best_move(hand):
-    """手札から最強のコンボを探すAI"""
+    """手札から最強かつ正確なコンボを探すAI"""
     if not hand:
         return [], 0
         
     best_move = [hand[0]]
     _, max_damage = evaluate_hand(best_move)
     
-    # 1枚〜手札の枚数までの全ての組み合わせをチェック
+    # 1枚から手札の最大枚数までのすべての組み合わせを検証
     for r in range(1, len(hand) + 1):
         for combo in itertools.combinations(hand, r):
             combo_list = list(combo)
-            _, damage = evaluate_hand(combo_list)
-            if damage > max_damage:
-                max_damage = damage
-                best_move = combo_list
-                
-    
+            hand_name, damage = evaluate_hand(combo_list)
+            
+            # 「通常攻撃」よりも役（コンボ）が成立しているものを優先しつつ、
+            # ダメージがより高い組み合わせを採用する
+            if hand_name != "通常攻撃":
+                # コンボの場合は少し優先度を上げる、または純粋にダメージ比較
+                if damage > max_damage:
+                    max_damage = damage
+                    best_move = combo_list
+            else:
+                # 通常攻撃（1枚の場合など）の比較
+                if damage > max_damage and r == 1:
+                    max_damage = damage
+                    best_move = combo_list
+                    
+    # 万が一の保険：もしbest_moveが空なら手札の最初の1枚にする
+    if not best_move:
+        best_move = [hand[0]]
+        _, max_damage = evaluate_hand(best_move)
         
     return best_move, max_damage
 
