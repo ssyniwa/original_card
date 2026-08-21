@@ -170,7 +170,7 @@ else:
   for i, card in enumerate(st.session_state.player_hand):
       with cols[i]:
           st.image(f"images/{card.suit}_{card.value}.jpg", width=120)
-          # チェックボックスのキーにインデックスを安全に紐付ける
+          st.caption(f"{ATTRIBUTES[card.suit]['icon']} {card.value}")
           if st.checkbox("選択", key=f"card_{i}"):
               selected_indices.append(i)
   
