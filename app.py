@@ -46,7 +46,8 @@ if "initialized" not in st.session_state:
       "ゲーム開始！カードを選んで攻撃またはコンボを狙おう。"
   ]
   st.session_state.initialized = True
-
+  # 追記：AIの直前行動を記録する場所
+  st.session_state.ai_last_card = None
 
 # 役判定関数
 def evaluate_hand(cards):
@@ -155,20 +156,32 @@ else:
       # AIのターン（簡易的ランダム反撃）
       if st.session_state.ai_hp > 0 and st.session_state.ai_hand:
         ai_choice = random.choice(st.session_state.ai_hand)
+        st.session_state.ai_last_card = ai_choice # ★ここに追加：出したカードを記録
+        
         ai_damage = ai_choice.value * 2
-        st.session_state.player_hp = max(
-            0, st.session_state.player_hp - ai_damage
-        )
-        st.session_state.log.insert(
-            0,
-            f"AIの反撃！{ATTRIBUTES[ai_choice.suit]['icon']} {ai_choice.suit}の{ai_choice.value}で攻撃され、**{ai_damage}** のダメージを受けた！",
-        )
+        st.session_state.player_hp = max(0, st.session_state.player_hp - ai_damage)
+        st.session_state.log.insert(0, f"AIの反撃！{ATTRIBUTES[ai_choice.suit]['icon']} {ai_choice.suit}の{ai_choice.value}で攻撃！")
+        
         # AIの手札入れ替え
         st.session_state.ai_hand.remove(ai_choice)
         if st.session_state.deck:
           st.session_state.ai_hand.append(st.session_state.deck.pop())
 
       st.rerun()
+
+  # ★ここに追加：AIの直前カードを表示するエリア
+  st.subheader("AIの直前の行動")
+  if st.session_state.ai_last_card:
+    c = st.session_state.ai_last_card
+    col_a, col_b = st.columns([1, 3])
+    with col_a:
+        st.image("ai_icon.png", width=50) # AIアイコンなど
+    with col_b:
+        st.info(f"AIがカードを出しました: {c.suit} {c.value}")
+    # 画像を表示する場合の例：
+    # st.image(f"images/{c.suit}_{c.value}.png", width=80)
+  else:
+    st.write("まだ攻撃を受けていません。")
 
   # バトルログ
   st.markdown("### 📜 バトルログ")
