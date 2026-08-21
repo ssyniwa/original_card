@@ -1,6 +1,6 @@
 import random
 import streamlit as st
-
+import itertools
 # 属性と表示設定
 ATTRIBUTES = {
     "fire": {"color": "red", "icon": "🔥"},
@@ -51,39 +51,56 @@ if "initialized" not in st.session_state:
 
 # 役判定関数
 def evaluate_hand(cards):
-  if not cards:
-    return "選択なし", 0
+    if not cards:
+        return "選択なし", 0
 
-  suits = [c.suit for c in cards]
-  values = sorted([c.value for c in cards])
+    suits = [c.suit for c in cards]
+    values = sorted([c.value for c in cards])
 
-  is_same_suit = len(set(suits)) == 1
-  is_same_value = len(set(values)) == 1
-  is_sequential = (
-      values == list(range(values[0], values[0] + len(values)))
-      if len(values) > 1
-      else True
-  )
+    is_same_suit = len(set(suits)) == 1
+    # 数字のカウント
+    val_counts = {v: values.count(v) for v in set(values)}
+    max_count = max(val_counts.values())
+    
+    # 連番チェック
+    is_sequential = all(values[i] + 1 == values[i+1] for i in range(len(values)-1))
+    
+    base_power = sum(values)
 
-  base_power = sum(values)
+    # 1. ストレートフラッシュ (3枚以上で連番かつ同属性)
+    if len(cards) >= 3 and is_same_suit and is_sequential:
+        return "🌟 ストレートフラッシュ", base_power * 4.0
+    
+    # 2. フォーカード
+    if max_count == 4:
+        return "🍀 フォーカード", base_power * 3.5
+        
+    # 3. スリーカード
+    if max_count == 3:
+        return "🔥 スリーカード", base_power * 2.5
+        
+    # 4. フラッシュ (同属性)
+    if len(cards) >= 2 and is_same_suit:
+        return "🌊 フラッシュ", base_power * 2.0
+        
+    # 5. ペア
+    if max_count == 2:
+        return "✨ ペア", base_power * 1.5
 
-  # ストレートフラッシュ (3枚以上で連番かつ同属性)
-  if len(cards) >= 3 and is_same_suit and is_sequential:
-    return (
-        "🌟 ストレートフラッシュ！【超絶強力な神速の一撃】",
-        base_power * 4,
-    )
-
-  # 同色フラッシュ (同属性)
-  if len(cards) >= 2 and is_same_suit:
-    return f"🔥 {cards[0].suit}のフラッシュ【属性共鳴】", base_power * 2
-
-  # 同数ペア
-  if is_same_value:
-    return f"✨ 同数コンボ（{len(cards)}枚）", base_power * 1.5
-
-  return "普通の一撃", base_power
-
+    return "通常攻撃", base_power
+def get_ai_best_move(hand):
+    """手札から最強のコンボを探すAI"""
+    best_move = None
+    max_damage = -1
+    
+    # 1枚〜5枚までの全ての組み合わせをチェック（計算負荷低減のため最大3枚まで等に制限してもOK）
+    for r in range(1, len(hand) + 1):
+        for combo in itertools.combinations(hand, r):
+            _, damage = evaluate_hand(list(combo))
+            if damage > max_damage:
+                max_damage = damage
+                best_move = list(combo)
+    return best_move, max_damage
 
 # 画面レイアウト
 st.title("🃏 属性トランプ・AIカードバトル")
@@ -158,17 +175,20 @@ else:
   
           # AIのターン：手札の中で最も数値が高いカードを選択
           if st.session_state.ai_hp > 0:
-              # 戦略：手札の中で最強のカードを選ぶ
-              ai_choice = max(st.session_state.ai_hand, key=lambda x: x.value)
-              st.session_state.ai_last_card = ai_choice
-              
-              ai_damage = ai_choice.value * 2
-              st.session_state.player_hp = max(0, st.session_state.player_hp - ai_damage)
-              
-              # AIの手札入れ替え
-              st.session_state.ai_hand.remove(ai_choice)
-              if st.session_state.deck:
-                  st.session_state.ai_hand.append(st.session_state.deck.pop())
+            # 最強の組み合わせを選択
+            ai_choice, ai_damage = get_ai_best_move(st.session_state.ai_hand)
+            
+            # AIが選んだカードをログ用に記録
+            st.session_state.ai_last_card_list = ai_choice 
+            
+            st.session_state.player_hp = max(0, st.session_state.player_hp - int(ai_damage))
+            st.session_state.log.insert(0, f"AIのコンボ！{int(ai_damage)}のダメージを受けた！")
+            
+            # AIの手札から使用したカードを除去して補充
+            for card in ai_choice:
+                st.session_state.ai_hand.remove(card)
+                if st.session_state.deck:
+                    st.session_state.ai_hand.append(st.session_state.deck.pop())
   
           st.rerun()
   
