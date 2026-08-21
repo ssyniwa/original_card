@@ -139,7 +139,7 @@ else:
       
       # 役の判定結果を再計算して表示（ログだけだと分かりにくいため）
       hand_name, _ = evaluate_hand(ai_cards)
-      st.write(f"### AIが発動した役: {hand_name}")
+      
       
       # カードを並べて表示するためのカラム作成
       ai_cols = st.columns(len(ai_cards))
