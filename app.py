@@ -162,14 +162,16 @@ else:
   # 3. プレイヤーの手札選択（プレイヤーの場）
   st.subheader("👤 あなたの手札")
   selected_indices = []
-  cols = st.columns(len(st.session_state.player_hand))
+  
+  # ★安全策：手札が空でないことを保証する（0枚なら1以上のカラムにする）
+  num_player_cols = max(1, len(st.session_state.player_hand))
+  cols = st.columns(num_player_cols)
   
   for i, card in enumerate(st.session_state.player_hand):
       with cols[i]:
           st.image(f"images/{card.suit}_{card.value}.jpg", width=120)
-          st.caption(f"{ATTRIBUTES[card.suit]['icon']} {card.value}")
-          st.checkbox("選択", key=f"card_{i}")
-          if st.session_state.get(f"card_{i}"):
+          # チェックボックスのキーにインデックスを安全に紐付ける
+          if st.checkbox("選択", key=f"card_{i}"):
               selected_indices.append(i)
   
   # --- 攻撃ボタン処理 ---
