@@ -212,7 +212,7 @@ else:
       ai_cols = st.columns(len(ai_cards))
       for i, card in enumerate(ai_cards):
           with ai_cols[i]:
-              st.image(f"images/{card.suit}_{card.value}.jpg", width=120)
+              st.image(f"images/{card.suit}_{card.value}.jpg", width=150)
               st.caption(f"{ATTRIBUTES[card.suit]['icon']} {card.value}")
   else:
       st.write("AIはまだカードを出していません。")
@@ -238,7 +238,7 @@ else:
   
   for i, card in enumerate(st.session_state.player_hand):
       with cols[i]:
-          st.image(f"images/{card.suit}_{card.value}.jpg", width=120)
+          st.image(f"images/{card.suit}_{card.value}.jpg", width=150)
           st.caption(f"{ATTRIBUTES[card.suit]['icon']} {card.value}")
           if st.checkbox("選択", key=f"card_{i}"):
               selected_indices.append(i)
