@@ -183,10 +183,9 @@ else:
       else:
           # プレイヤーの攻撃処理
           chosen_cards = [st.session_state.player_hand[i] for i in selected_indices]
-          hand_name, damage = evaluate_hand(chosen_cards)
-          st.write(f"### プレイヤーが発動した役: {hand_name}")
+          phand_name, damage = evaluate_hand(chosen_cards)
           st.session_state.ai_hp = max(0, st.session_state.ai_hp - int(damage))
-          st.session_state.log.insert(0, f"プレイヤーの攻撃！『{int(damage)}』のダメージを与えた！")
+          st.session_state.log.insert(0, f"プレイヤーの『{phand_name}』！『{int(damage)}』のダメージを与えた！")
           # 手札の更新
           selected_indices.sort(reverse=True)
           for idx in selected_indices:
