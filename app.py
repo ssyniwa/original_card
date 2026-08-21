@@ -246,9 +246,7 @@ else:
           st.session_state.ai_hp = max(0, st.session_state.ai_hp - int(damage))
           st.session_state.log.insert(0, f"プレイヤーの『{phand_name}』！『{int(damage)}』のダメージを与えた！")
           # 手札の更新（使った分を補充して常に5枚にする）
-          selected_indices.sort(reverse=True)
-          for idx in selected_indices:
-              st.session_state.player_hand.pop(idx)
+          
           
           # 手札が5枚未満の間、デッキから補充する
           while len(st.session_state.player_hand) < 5 and st.session_state.deck:
@@ -268,10 +266,7 @@ else:
                 # 役の名前もログに出すようにする
                 hand_name, _ = evaluate_hand(ai_choice)
                 st.session_state.log.insert(0, f"AIの『{hand_name}』！ **{int(ai_damage)}** のダメージを受けた！")
-                # AIの手札から「コンボに使用したカードのみ」を除去
-                for card in ai_choice:
-                    if card in st.session_state.ai_hand:
-                        st.session_state.ai_hand.remove(card)
+                
                 
                 # 手札が5枚未満の間、デッキから補充する
                 while len(st.session_state.ai_hand) < 5 and st.session_state.deck:
