@@ -90,16 +90,24 @@ def evaluate_hand(cards):
     return "通常攻撃", base_power
 def get_ai_best_move(hand):
     """手札から最強のコンボを探すAI"""
+    if not hand:
+        return [], 0
+        
     best_move = None
     max_damage = -1
     
-    # 1枚〜5枚までの全ての組み合わせをチェック（計算負荷低減のため最大3枚まで等に制限してもOK）
     for r in range(1, len(hand) + 1):
         for combo in itertools.combinations(hand, r):
             _, damage = evaluate_hand(list(combo))
             if damage > max_damage:
                 max_damage = damage
                 best_move = list(combo)
+                
+    # 万が一見つからない場合の安全策
+    if best_move is None:
+        best_move = [hand[0]]
+        _, max_damage = evaluate_hand(best_move)
+        
     return best_move, max_damage
 
 # 画面レイアウト
@@ -182,21 +190,22 @@ else:
                   st.session_state.player_hand.append(st.session_state.deck.pop())
   
           # AIのターン：手札の中で最も数値が高いカードを選択
-          if st.session_state.ai_hp > 0:
+          if st.session_state.ai_hp > 0 and st.session_state.ai_hand:
             # 最強の組み合わせを選択
             ai_choice, ai_damage = get_ai_best_move(st.session_state.ai_hand)
             
-            # AIが選んだカードをログ用に記録
-            st.session_state.ai_last_card = ai_choice 
-            
-            st.session_state.player_hp = max(0, st.session_state.player_hp - int(ai_damage))
-            st.session_state.log.insert(0, f"AIのコンボ！{int(ai_damage)}のダメージを受けた！")
-            
-            # AIの手札から使用したカードを除去して補充
-            for card in ai_choice:
-                st.session_state.ai_hand.remove(card)
-                if st.session_state.deck:
-                    st.session_state.ai_hand.append(st.session_state.deck.pop())
+            if ai_choice: # ai_choiceが確実に存在する場合のみ処理
+                st.session_state.ai_last_card = ai_choice 
+                
+                st.session_state.player_hp = max(0, st.session_state.player_hp - int(ai_damage))
+                st.session_state.log.insert(0, f"AIの攻撃！『{int(ai_damage)}』のダメージを受けた！")
+                
+                # AIの手札から使用したカードを除去して補充
+                for card in ai_choice:
+                    if card in st.session_state.ai_hand:
+                        st.session_state.ai_hand.remove(card)
+                    if st.session_state.deck:
+                        st.session_state.ai_hand.append(st.session_state.deck.pop())
   
           st.rerun()
   
