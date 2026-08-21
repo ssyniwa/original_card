@@ -123,13 +123,20 @@ elif st.session_state.ai_hp <= 0:
 else:
   # 1. 対面バトルエリア（AIの場）
   st.subheader("🤖 AIの場")
+  # ai_last_card がリストかどうか判定して表示
   if st.session_state.ai_last_card:
-      c = st.session_state.ai_last_card
-      col_ai1, col_ai2 = st.columns([1, 4])
-      with col_ai1:
-          st.image(f"images/{c.suit}_{c.value}.jpg", width=120)
-      with col_ai2:
-          st.write(f"### AIは {ATTRIBUTES[c.suit]['icon']} {c.suit} の {c.value} を出した！")
+      ai_cards = st.session_state.ai_last_card
+      
+      # 役の判定結果を再計算して表示（ログだけだと分かりにくいため）
+      hand_name, _ = evaluate_hand(ai_cards)
+      st.write(f"### AIが発動した役: {hand_name}")
+      
+      # カードを並べて表示するためのカラム作成
+      ai_cols = st.columns(len(ai_cards))
+      for i, card in enumerate(ai_cards):
+          with ai_cols[i]:
+              st.image(f"images/{card.suit}_{card.value}.jpg", width=100)
+              st.caption(f"{ATTRIBUTES[card.suit]['icon']} {card.value}")
   else:
       st.write("AIはまだカードを出していません。")
   
