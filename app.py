@@ -105,10 +105,7 @@ def get_ai_best_move(hand):
                 max_damage = damage
                 best_move = combo_list
                 
-    # 万が一見つからない場合の安全策
-    if best_move is None:
-        best_move = [hand[0]]
-        _, max_damage = evaluate_hand(best_move)
+    
         
     return best_move, max_damage
 
